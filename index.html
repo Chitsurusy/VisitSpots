@@ -3,331 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>塱头古村·探秘之旅</title>
+    <title>塱头古村·集章打卡</title>
     <style>
         :root {
-            --primary: #8B4513;   /* 主色调：古铜色 */
-            --secondary: #D4AF37; /* 辅色调：金色 */
-            --bg: #F5F5DC;        /* 背景色：米色 */
-            --text: #333333;
+            --primary: #8B4513; /* 古村棕 */
+            --gold: #D4AF37;    /* 金色 */
+            --bg: #F9F4E8;
         }
-        body { margin: 0; padding: 0; font-family: "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        body { font-family: "Microsoft YaHei", sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
         
-        /* 页面切换容器 */
-        .page { display: none; padding-bottom: 50px; animation: fadeIn 0.5s; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* 头部：展示用户ID */
+        .header { background: var(--primary); color: white; padding: 20px 15px; text-align: center; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .user-id-box { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; display: inline-block; margin-top: 5px; font-size: 14px; letter-spacing: 1px; }
 
-        /* --- 首页样式 --- */
-        .hero {
-            height: 60vh;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .hero-overlay {
-            background: rgba(0,0,0,0.4);
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            color: white; text-align: center;
-        }
-        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .hero p { font-size: 1.2rem; padding: 0 20px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
         
-        .start-btn {
-            margin-top: 30px;
-            background: var(--secondary); color: #fff;
-            border: none; padding: 15px 40px;
-            font-size: 1.2rem; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            cursor: pointer; animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        /* 进度条 */
+        .status-card { background: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .progress-wrap { background: #eee; height: 15px; border-radius: 10px; margin: 10px 0; overflow: hidden; }
+        .progress-fill { background: var(--gold); height: 100%; width: 0%; transition: width 0.5s; }
 
-        /* --- 游戏主界面样式 --- */
-        .game-header {
-            background: var(--primary); color: white;
-            padding: 10px; display: flex;
-            justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100;
-        }
-        .progress-bar-wrap { flex: 1; margin: 0 15px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: var(--secondary); width: 0%; transition: width 0.5s; }
-        
-        .view-tabs {
-            display: flex; background: white; margin: 10px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; }
-        .tab.active { background: var(--primary); color: white; }
-
-        /* 列表模式 */
-        .spot-list { padding: 10px; }
+        /* 景点列表 */
         .spot-card {
-            background: white; padding: 15px; margin-bottom: 10px;
-            border-radius: 8px; display: flex; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #ccc;
+            background: white; padding: 15px; margin-bottom: 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative;
         }
-        .spot-card.done { border-left-color: var(--secondary); }
-        .spot-info { flex: 1; }
-        .spot-status { font-size: 0.8rem; color: #888; margin-top: 5px; }
-        .btn-scan {
-            background: var(--primary); color: white; border: none;
-            padding: 8px 15px; border-radius: 15px; font-size: 0.9rem;
+        .spot-info h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .spot-info p { margin: 0; font-size: 12px; color: #888; }
+        
+        .stamp-box {
+            width: 70px; height: 70px; border: 2px dashed #ddd; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: #fafafa; flex-shrink: 0; margin-left: 15px;
         }
-        .btn-scan:disabled { background: #ccc; }
+        .stamp-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .stamp-img.show { display: block; animation: stampAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        @keyframes stampAnim {
+            from { transform: scale(2) rotate(-15deg); opacity: 0; }
+            to { transform: scale(1) rotate(0); opacity: 1; }
+        }
 
-        /* 地图模式 */
-        .map-container {
-            position: relative; width: 100%; height: 60vh;
-            margin: 10px auto; background-color: #e0e0e0;
-            background-size: cover; background-position: center;
-            border-radius: 8px; overflow: hidden;
+        /* 按钮 */
+        .btn-checkin {
+            position: absolute; right: 95px; bottom: 15px;
+            background: var(--primary); color: white; border: none;
+            padding: 5px 12px; border-radius: 15px; font-size: 12px; cursor: pointer;
         }
-        .map-pin {
-            position: absolute; width: 40px; height: 40px;
-            background: #C0392B; color: white; border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg); display: flex;
-            align-items: center; justify-content: center;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.3);
-            cursor: pointer; transition: top 0.3s, left 0.3s;
-        }
-        .map-pin.done { background: var(--secondary); }
-        .map-pin span { transform: rotate(45deg); font-size: 12px; }
+        .btn-checkin:disabled { background: #ccc; }
 
         /* 弹窗 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 999;
-            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;
         }
-        .modal-box {
-            background: white; padding: 25px; border-radius: 15px;
-            text-align: center; width: 85%; max-width: 350px;
+        .modal-content {
+            background: white; padding: 30px 20px; border-radius: 15px; text-align: center; width: 85%; max-width: 320px;
             animation: popUp 0.3s;
         }
-        @keyframes popUp { from { transform: scale(0.8); } to { transform: scale(1); } }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .code-input {
+            width: 100%; padding: 12px; font-size: 18px; text-align: center; letter-spacing: 3px;
+            margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; outline: none;
+        }
+        .code-input:focus { border-color: var(--primary); }
+        
+        .btn-main { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 25px; font-size: 16px; }
+        .btn-cancel { background: #eee; color: #666; border: none; padding: 10px; width: 100%; border-radius: 25px; margin-top: 10px; font-size: 14px; }
+        
+        .msg-box { font-size: 13px; margin-top: 10px; min-height: 20px; }
+        .error { color: red; }
+        .success { color: green; }
+
+        /* 完成状态大图 */
+        .complete-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); color: white; z-index: 2000;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+        .big-ticket { background: white; color: #333; padding: 20px; border-radius: 10px; width: 80%; margin-top: 20px; border: 4px solid var(--gold); }
+        .ticket-id { font-size: 24px; font-weight: bold; color: var(--primary); margin: 10px 0; }
+
     </style>
 </head>
 <body>
 
-<!-- 首页 -->
-<div id="page-home" class="page active">
-    <div class="hero" id="home-banner">
-        <div class="hero-overlay">
-            <h1 id="home-title">标题</h1>
-            <p id="home-desc">描述文字</p>
-            <button class="start-btn" onclick="goToGame()">开始探秘</button>
+<div class="header">
+    <h2>塱头古村 · 探秘</h2>
+    <div class="user-id-box">游客编号: <span id="display-user-id">生成中...</span></div>
+</div>
+
+<div class="container">
+    <div class="status-card">
+        <div style="font-size: 18px; font-weight: bold;">收集进度</div>
+        <div class="progress-wrap">
+            <div class="progress-fill" id="progress-bar"></div>
         </div>
+        <div style="font-size: 14px; color: #666;">
+            已收集 <span id="current-num" style="color:var(--primary); font-weight:bold;">0</span> / <span id="total-num">0</span>
+        </div>
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">到达景点后，请点击“打卡”并输入现场密码</p>
     </div>
-    <div style="padding: 20px; text-align: center; color: #666;">
-        <p>集齐所有印章，赢取精美文创礼品</p>
+
+    <div id="spot-list">
+        <!-- 景点列表 -->
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <button onclick="resetGame()" style="background:none; border:none; color:#999; font-size:12px; text-decoration:underline;">重置我的进度</button>
     </div>
 </div>
 
-<!-- 游戏页 -->
-<div id="page-game" class="page">
-    <div class="game-header">
-        <span style="font-size:0.9rem" onclick="location.reload()">退出</span>
-        <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" id="progress-fill"></div>
-        </div>
-        <span style="font-size:0.9rem" id="progress-text">0/0</span>
-    </div>
-
-    <div class="view-tabs">
-        <div class="tab active" onclick="switchView('list')">📋 列表</div>
-        <div class="tab" onclick="switchView('map')">🗺️ 地图</div>
-    </div>
-
-    <!-- 列表视图 -->
-    <div id="view-list" class="spot-list" style="display:block;">
-        <!-- 动态生成 -->
-    </div>
-
-    <!-- 地图视图 -->
-    <div id="view-map" class="map-container">
-        <!-- 动态生成大头针 -->
+<!-- 密码输入弹窗 -->
+<div id="pwd-modal" class="modal">
+    <div class="modal-content">
+        <h3 id="modal-title">打卡验证</h3>
+        <p style="color:#666; font-size:14px;">请输入现场发现的4位密码</p>
+        <input type="number" id="pwd-input" class="code-input" placeholder="----" maxlength="4">
+        <button class="btn-main" onclick="confirmCheckIn()">确认打卡</button>
+        <button class="btn-cancel" onclick="closeModal()">取消</button>
+        <div id="modal-msg" class="msg-box"></div>
     </div>
 </div>
 
-<!-- 打卡确认弹窗 -->
-<div id="modal-checkin" class="modal">
-    <div class="modal-box">
-        <h3 id="modal-title">打卡</h3>
-        <p>确认您已到达该景点？</p>
-        <div style="margin:20px 0;">
-            <img id="stamp-preview" style="width:80px; height:80px; border-radius:50%; border:2px dashed #ccc;">
-        </div>
-        <button class="start-btn" style="font-size:1rem; margin:5px; width:100%;" onclick="confirmStamp()">确认打卡</button>
-        <button class="start-btn" style="font-size:1rem; margin:5px; width:100%; background:#999;" onclick="closeModal()">取消</button>
+<!-- 领奖界面 -->
+<div id="reward-screen" class="complete-overlay">
+    <div style="font-size: 50px;">🎉</div>
+    <h2>恭喜集章完成！</h2>
+    <p>您已完成所有景点的打卡任务</p>
+    
+    <div class="big-ticket">
+        <div>请向工作人员出示</div>
+        <div class="ticket-id" id="ticket-user-id">L-0000</div>
+        <div style="font-size: 12px; color: #666;">核销编号</div>
     </div>
+    
+    <button onclick="document.getElementById('reward-screen').style.display='none'" style="margin-top:30px; background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:10px 30px; border-radius:20px;">关闭</button>
 </div>
 
 <script>
-    /***************************************************
-     *  ⚙️ 超级配置区 (管理员在这里修改) ⚙️
-     *  修改完后，保存文件并重新上传到 Vercel 即可
-     ***************************************************/
-    
-    const CONFIG = {
-        // 1. 首页配置
-        homeTitle: "塱头古村·探秘之旅",  // 首页大标题
-        homeDesc: "穿行古巷，寻访历史，集齐印章赢好礼", // 首页副标题
-        // 首页背景图 (建议用宽图，可以是网络链接或本地文件名如 banner.jpg)
-        homeBannerImg: "https://picsum.photos/seed/langtou/800/600", 
-        
-        // 2. 地图配置
-        // 地图背景图 (建议上传一张古村的平面图，如果没有，可以使用下面这个默认色块)
-        // 如果你有图，把地址填在这里，比如 "map.jpg"
-        mapBackgroundImg: "https://picsum.photos/seed/mapbg/800/600", 
+    // --- 1. 配置景点 (修改名字、图片和密码) ---
+    // img: 图片文件名 (需要放在同级目录，如 1.jpg)
+    // code: 现场贴出的4位数字密码
+    const spots = [
+        { id: 1, name: "塱头牌坊", img: "1.jpg", code: "8888" },
+        { id: 2, name: "青云古桥", img: "2.jpg", code: "1234" },
+        { id: 3, name: "渔隐公祠", img: "3.jpg", code: "5678" },
+        { id: 4, name: "百岁榕树", img: "4.jpg", code: "9090" },
+        { id: 5, name: "积墨书室", img: "5.jpg", code: "1122" }
+    ];
 
-        // 3. 打卡点配置
-        // x, y 是大头针在地图上的位置 (百分比)，例如 top:10%, left:20%
-        // img 是印章图片
-        spots: [
-            { id: 1, name: "村口牌坊",   x: 10, y: 20, img: "https://picsum.photos/seed/s1/100/100" },
-            { id: 2, name: "青云桥",     x: 30, y: 40, img: "https://picsum.photos/seed/s2/100/100" },
-            { id: 3, name: "渔隐公祠",   x: 50, y: 60, img: "https://picsum.photos/seed/s3/100/100" },
-            { id: 4, name: "古榕树",     x: 70, y: 30, img: "https://picsum.photos/seed/s4/100/100" },
-            { id: 5, name: "积墨楼",     x: 85, y: 75, img: "https://picsum.photos/seed/s5/100/100" }
-        ]
-    };
-
-    /***************************************************
-     *  以下为程序逻辑，无需修改
-     ***************************************************/
-    
-    // 状态管理
-    let collectedIds = JSON.parse(localStorage.getItem('langtou_ids')) || [];
-    let currentSpotId = null;
-
-    // 初始化
-    window.onload = function() {
-        // 应用配置
-        document.getElementById('home-title').innerText = CONFIG.homeTitle;
-        document.getElementById('home-desc').innerText = CONFIG.homeDesc;
-        document.getElementById('home-banner').style.backgroundImage = `url('${CONFIG.homeBannerImg}')`;
-        document.getElementById('view-map').style.backgroundImage = `url('${CONFIG.mapBackgroundImg}')`;
-        
-        checkUrl(); // 检查是否扫码进入
-        updateProgress();
-    };
-
-    // 跳转到游戏页
-    function goToGame() {
-        document.getElementById('page-home').classList.remove('active');
-        document.getElementById('page-game').classList.add('active');
-        renderList();
-        renderMap();
+    // --- 2. 用户系统 (自动生成唯一ID) ---
+    let userId = localStorage.getItem('langtou_userid');
+    if (!userId) {
+        // 生成随机ID，例如 L-8392
+        userId = 'L-' + Math.floor(1000 + Math.random() * 9000);
+        localStorage.setItem('langtou_userid', userId);
     }
 
-    // 切换列表/地图视图
-    function switchView(type) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
-        
-        if(type === 'list') {
-            document.getElementById('view-list').style.display = 'block';
-            document.getElementById('view-map').style.display = 'none';
-        } else {
-            document.getElementById('view-list').style.display = 'none';
-            document.getElementById('view-map').style.display = 'block';
-        }
+    // --- 3. 数据存储 ---
+    let collected = JSON.parse(localStorage.getItem('langtou_collected')) || [];
+    let currentCheckId = null;
+
+    // 初始化
+    function init() {
+        document.getElementById('display-user-id').innerText = userId;
+        document.getElementById('ticket-user-id').innerText = userId;
+        renderList();
+        updateProgress();
+        checkUrl(); // 兼容扫码直接跳转
     }
 
     // 渲染列表
     function renderList() {
-        const listEl = document.getElementById('view-list');
-        listEl.innerHTML = '';
-        CONFIG.spots.forEach(spot => {
-            const isDone = collectedIds.includes(spot.id);
-            const div = document.createElement('div');
-            div.className = `spot-card ${isDone ? 'done' : ''}`;
-            div.innerHTML = `
-                <div class="spot-info">
-                    <h3 style="margin:0;">${spot.name}</h3>
-                    <div class="spot-status">${isDone ? '✅ 已打卡' : '📍 未打卡'}</div>
+        const list = document.getElementById('spot-list');
+        list.innerHTML = '';
+        document.getElementById('total-num').innerText = spots.length;
+        
+        spots.forEach(spot => {
+            const isCollected = collected.includes(spot.id);
+            
+            // HTML结构
+            const html = `
+                <div class="spot-card">
+                    <div class="spot-info">
+                        <h3>${spot.name}</h3>
+                        <p>${isCollected ? '已打卡' : '未打卡'}</p>
+                        ${!isCollected ? `<button class="btn-checkin" onclick="openCheckIn(${spot.id}, '${spot.name}')">打卡</button>` : ''}
+                    </div>
+                    <div class="stamp-box">
+                        <img src="${spot.img}" class="stamp-img ${isCollected ? 'show' : ''}" id="img-${spot.id}">
+                    </div>
                 </div>
-                <button class="btn-scan" onclick="openCheckin(${spot.id})" ${isDone ? 'disabled' : ''}>
-                    ${isDone ? '完成' : '打卡'}
-                </button>
             `;
-            listEl.appendChild(div);
+            list.innerHTML += html;
         });
     }
 
-    // 渲染地图大头针
-    function renderMap() {
-        const mapEl = document.getElementById('view-map');
-        mapEl.innerHTML = ''; // 清空
-        CONFIG.spots.forEach(spot => {
-            const isDone = collectedIds.includes(spot.id);
-            const pin = document.createElement('div');
-            pin.className = `map-pin ${isDone ? 'done' : ''}`;
-            pin.style.top = spot.y + '%';
-            pin.style.left = spot.x + '%';
-            pin.innerHTML = `<span>${isDone ? '✔' : '●'}</span>`;
-            pin.onclick = () => openCheckin(spot.id);
-            mapEl.appendChild(pin);
-        });
+    // 更新进度
+    function updateProgress() {
+        const count = collected.length;
+        const total = spots.length;
+        const percent = total === 0 ? 0 : (count / total) * 100;
+        
+        document.getElementById('current-num').innerText = count;
+        document.getElementById('progress-bar').style.width = percent + '%';
+
+        // 检查是否全部完成
+        if (count === total && total > 0) {
+            setTimeout(() => {
+                document.getElementById('reward-screen').style.display = 'flex';
+            }, 1000);
+        }
     }
 
     // 打开打卡弹窗
-    function openCheckin(id) {
-        if (collectedIds.includes(id)) {
-            alert("您已经打过这个卡了！");
-            return;
+    function openCheckIn(id, name) {
+        currentCheckId = id;
+        document.getElementById('modal-title').innerText = '打卡：' + name;
+        document.getElementById('pwd-input').value = '';
+        document.getElementById('modal-msg').innerText = '';
+        document.getElementById('pwd-modal').style.display = 'flex';
+        // 自动聚焦输入框
+        setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+    }
+
+    // 确认打卡（验证密码）
+    function confirmCheckIn() {
+        const inputVal = document.getElementById('pwd-input').value;
+        const targetSpot = spots.find(s => s.id === currentCheckId);
+        const msgBox = document.getElementById('modal-msg');
+
+        if (inputVal === targetSpot.code) {
+            // 密码正确
+            collected.push(currentCheckId);
+            localStorage.setItem('langtou_collected', JSON.stringify(collected));
+            
+            // UI更新
+            document.getElementById(`img-${currentCheckId}`).classList.add('show');
+            msgBox.className = 'msg-box success';
+            msgBox.innerText = '打卡成功！';
+            
+            setTimeout(() => {
+                closeModal();
+                renderList();
+                updateProgress();
+            }, 800);
+        } else {
+            // 密码错误
+            msgBox.className = 'msg-box error';
+            msgBox.innerText = '密码错误，请重试';
+            document.getElementById('pwd-input').value = '';
         }
-        currentSpotId = id;
-        const spot = CONFIG.spots.find(s => s.id === id);
-        document.getElementById('modal-title').innerText = "打卡：" + spot.name;
-        document.getElementById('stamp-preview').src = spot.img;
-        document.getElementById('modal-checkin').style.display = 'flex';
     }
 
     function closeModal() {
-        document.getElementById('modal-checkin').style.display = 'none';
+        document.getElementById('pwd-modal').style.display = 'none';
     }
 
-    // 确认打卡
-    function confirmStamp() {
-        if (!collectedIds.includes(currentSpotId)) {
-            collectedIds.push(currentSpotId);
-            localStorage.setItem('langtou_ids', JSON.stringify(collectedIds));
-            updateProgress();
-            renderList();
-            renderMap();
-            alert("打卡成功！印章已收集");
-        }
-        closeModal();
-    }
-
-    // 更新进度条
-    function updateProgress() {
-        const percent = Math.round((collectedIds.length / CONFIG.spots.length) * 100);
-        document.getElementById('progress-fill').style.width = percent + '%';
-        document.getElementById('progress-text').innerText = `${collectedIds.length}/${CONFIG.spots.length}`;
-    }
-
-    // 检查URL参数 (扫码功能)
+    // 兼容URL参数 (如 ?spot=1)
     function checkUrl() {
         const params = new URLSearchParams(window.location.search);
         const spotId = params.get('spot');
         if (spotId) {
-            // 如果有参数，自动跳转到游戏页并打开弹窗
-            setTimeout(() => {
-                goToGame();
-                openCheckin(parseInt(spotId));
-                // 清除参数防止刷新重复弹
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }, 100);
+            const target = spots.find(s => s.id == spotId);
+            if (target && !collected.includes(target.id)) {
+                openCheckIn(target.id, target.name);
+                // 清除URL，防止刷新重复弹窗
+                window.history.replaceState({}, document.title, "/");
+            }
         }
     }
-</script>
 
+    function resetGame() {
+        if(confirm('确定要清除当前游客的进度吗？')) {
+            localStorage.removeItem('langtou_collected');
+            // 也可以选择重置ID，这里暂时保留ID
+            location.reload();
+        }
+    }
+
+    window.onload = init;
+
+</script>
 </body>
 </html>
