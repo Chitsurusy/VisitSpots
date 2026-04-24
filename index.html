@@ -2,408 +2,434 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>塱头古村 · 耕读寻踪</title>
-    
-    <!-- 引入地图样式 -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塱头古村 · 耕读之旅</title>
     <style>
+        /* --- 全局配色：耕读文化 (稻穗绿 + 宣纸白) --- */
         :root {
-            /* 耕读文化配色方案 */
-            --primary: #2F4F4F;    /* 深黛绿 - 象征田园与稳重 */
-            --accent: #C0392B;     /* 朱砂红 - 象征印章与喜庆 */
-            --gold: #D4AC0D;       /* 鎏金 - 象征荣耀 */
-            --bg: #F9F7F2;        /* 宣纸白 - 背景色 */
+            --primary: #3A5F45;       /* 沉稳的绿色，代表耕作/自然 */
+            --secondary: #C5A065;     /* 哑光金，代表收获/文化 */
+            --bg-color: #F9F7F2;      /* 宣纸米色，做背景 */
             --card-bg: #FFFFFF;
-            --text-main: #333333;
-            --text-sub: #7F8C8D;
+            --text-main: #2C3E50;
+            --text-light: #7F8C8D;
+            --shadow: 0 8px 20px rgba(58, 95, 69, 0.08);
         }
 
-        body { 
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif; 
-            background: var(--bg); 
-            margin: 0; padding: 0; 
-            padding-bottom: 70px; /* 底部留白 */
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding-bottom: 80px;
         }
 
-        /* 标题字体特殊处理 - 体现文化感 */
-        h1, h2, h3, .cultural-font {
-            font-family: "Songti SC", "SimSun", "STSong", serif; 
+        /* --- 头部：身份票卡 --- */
+        .header-ticket {
+            background: linear-gradient(135deg, var(--primary) 0%, #2C4533 100%);
+            color: white;
+            padding: 30px 20px 50px 20px;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            position: relative;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        .header-title { font-size: 1.5rem; letter-spacing: 2px; margin-bottom: 5px; font-weight: 500; }
+        .header-subtitle { font-size: 0.85rem; opacity: 0.8; margin-bottom: 20px; }
+        
+        .user-badge {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        /* --- 地图区域 --- */
+        .map-section {
+            margin: -30px 15px 20px 15px; /* 向上重叠头部 */
+            background: white;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 10;
+        }
+        .map-img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            display: block;
+        }
+        .map-tip {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
+        /* --- 进度条 --- */
+        .progress-container {
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+        .progress-bar-bg {
+            background: #E0E0E0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: var(--secondary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            color: var(--primary);
             font-weight: bold;
         }
 
-        /* 顶部导航 */
-        .header { 
-            background: var(--primary); 
-            color: white; 
-            padding: 15px 15px; 
-            text-align: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            position: sticky; top: 0; z-index: 1000;
+        /* --- 景点列表 --- */
+        .spot-list {
+            padding: 0 15px;
+            display: grid;
+            gap: 15px;
         }
-        .header h2 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; }
-        .user-badge {
-            display: inline-block; background: rgba(255,255,255,0.15); 
-            padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-top: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        /* 视图切换 Tab */
-        .view-tabs {
-            display: flex; background: white; padding: 0 15px; border-bottom: 1px solid #eee;
-        }
-        .tab {
-            flex: 1; text-align: center; padding: 12px 0; cursor: pointer;
-            color: var(--text-sub); border-bottom: 3px solid transparent; transition: all 0.3s;
-        }
-        .tab.active {
-            color: var(--primary); border-bottom-color: var(--primary); font-weight: bold;
-        }
-
-        .container { max-width: 600px; margin: 0 auto; position: relative; }
-
-        /* 列表视图 */
-        .list-view { padding: 15px; display: none; }
-        .list-view.active { display: block; }
-
         .spot-card {
-            background: var(--card-bg); padding: 15px; margin-bottom: 12px; border-radius: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-left: 4px solid transparent;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.02);
             transition: transform 0.2s;
         }
-        .spot-card:active { transform: scale(0.99); }
-        .spot-card.done { border-left-color: var(--accent); }
+        .spot-card:active { transform: scale(0.98); }
+
+        .spot-thumb {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0f0f0;
+            flex-shrink: 0;
+            margin-right: 15px;
+            position: relative;
+        }
+        .spot-thumb img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .spot-status-icon {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(58, 95, 69, 0.9);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .spot-thumb.collected .spot-status-icon { opacity: 1; }
 
         .spot-info { flex: 1; }
-        .spot-info h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--text-main); }
-        .spot-info p { margin: 0; font-size: 12px; color: var(--text-sub); }
-
-        .stamp-icon {
-            width: 50px; height: 50px; border-radius: 50%; display: flex; 
-            align-items: center; justify-content: center; margin-left: 15px;
-            border: 1px solid #eee; font-size: 12px; color: #ccc;
-        }
-        .stamp-icon.collected {
-            background: var(--accent); color: white; border: none;
-            font-family: "KaiTi", serif; font-size: 24px; font-weight: bold;
-            box-shadow: 0 2px 5px rgba(192, 57, 43, 0.3);
-        }
-
-        /* 地图视图 */
-        .map-view { height: calc(100vh - 110px); width: 100%; display: none; }
-        .map-view.active { display: block; }
-
-        /* 打卡按钮 */
+        .spot-name { font-size: 1rem; font-weight: bold; margin-bottom: 4px; color: var(--text-main); }
+        .spot-desc { font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px; }
+        
         .btn-checkin {
-            background: var(--primary); color: white; border: none;
-            padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-top: 5px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        .btn-checkin:disabled { background: #ccc; }
+        .btn-checkin:disabled { background: #ddd; color: #999; }
 
-        /* 进度卡片 */
-        .progress-card {
-            background: white; margin: 15px; padding: 15px; border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;
-        }
-        .progress-text { color: var(--primary); font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; }
-        .bar-bg { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s; }
-
-        /* 弹窗 */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;
+        /* --- 弹窗 --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
             backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center; justify-content: center;
         }
         .modal-content {
-            background: var(--bg); padding: 25px; border-radius: 16px; width: 85%; max-width: 320px;
-            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.05);
+            background: white;
+            width: 85%; max-width: 340px;
+            padding: 30px 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
-        .modal h3 { color: var(--primary); margin-top: 0; }
-        .code-input {
-            width: 100%; padding: 12px; font-size: 22px; text-align: center; letter-spacing: 4px;
-            margin: 15px 0; border: 1px solid #ccc; border-radius: 8px; outline: none; background: white;
-            font-family: monospace;
-        }
-        .code-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47, 79, 79, 0.1); }
-        
-        .btn-main { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 25px; font-size: 16px; font-weight: bold; }
-        .btn-close { background: transparent; color: var(--text-sub); border: 1px solid #ddd; padding: 10px; width: 100%; border-radius: 25px; margin-top: 10px; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* 领奖界面 */
+        .pwd-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 5px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            margin: 20px 0;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .pwd-input:focus { border-color: var(--primary); }
+
+        .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
+        .btn-sec { width: 100%; padding: 12px; background: transparent; color: #999; border: none; margin-top: 10px; font-size: 14px; }
+
+        /* --- 领奖全屏 --- */
         .reward-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #2F4F4F 0%, #1a2f2f 100%); 
-            color: white; z-index: 3000; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
         }
-        .reward-box {
-            background: white; color: #333; padding: 30px; border-radius: 12px; width: 80%;
-            border: 2px solid var(--gold); box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        .reward-icon { font-size: 80px; margin-bottom: 20px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .ticket-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(58, 95, 69, 0.15);
+            border: 1px dashed var(--primary);
+            margin-top: 20px;
         }
-        .reward-id { font-size: 32px; color: var(--accent); font-family: monospace; margin: 15px 0; font-weight: bold; letter-spacing: 2px; }
+        .ticket-id { font-size: 32px; color: var(--primary); font-weight: bold; margin: 15px 0; font-family: monospace; letter-spacing: 2px; }
+
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>塱头古村 · 耕读寻踪</h2>
-        <div class="user-badge">游客编号: <span id="display-user-id">...</span></div>
+    <!-- 顶部票卡 -->
+    <div class="header-ticket">
+        <div class="header-title">塱头古村</div>
+        <div class="header-subtitle">耕读传家 · 诗书继世</div>
+        <div class="user-badge">游客 ID: <span id="display-user-id">--</span></div>
     </div>
 
-    <div class="container">
-        <!-- Tab 切换 -->
-        <div class="view-tabs">
-            <div class="tab active" onclick="switchTab('list')">集章列表</div>
-            <div class="tab" onclick="switchTab('map')">导览地图</div>
-        </div>
+    <!-- 地图区域 -->
+    <div class="map-section">
+        <!-- ★★★ 在这里修改地图图片的名字，默认是 map.jpg ★★★ -->
+        <img src="map.jpg" alt="古村导览图" class="map-img" id="map-img-tag">
+        <div class="map-tip">📍 参考导览图，寻找隐藏打卡点</div>
+    </div>
 
-        <!-- 列表视图 -->
-        <div id="list-view" class="list-view active">
-            <div class="progress-card">
-                <span class="progress-text">耕读修行 · <span id="current-num">0</span> / <span id="total-num">0</span></span>
-                <div class="bar-bg">
-                    <div class="bar-fill" id="progress-bar"></div>
-                </div>
-            </div>
-            
-            <div id="spot-list-container">
-                <!-- 动态生成 -->
-            </div>
-            <div style="text-align:center; padding:20px; color:#aaa; font-size:12px;">
-                <p>“耕以养身，读以明道”</p>
-            </div>
+    <!-- 进度 -->
+    <div class="progress-container">
+        <div class="progress-text">
+            <span>收集进度</span>
+            <span><span id="current-num">0</span> / <span id="total-num">0</span></span>
         </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+    </div>
 
-        <!-- 地图视图 -->
-        <div id="map-view" class="map-view">
-            <div id="map" style="height: 100%; width: 100%;"></div>
-        </div>
+    <!-- 列表 -->
+    <div class="spot-list" id="spot-list">
+        <!-- 动态生成 -->
+    </div>
+
+    <!-- 底部重置按钮 -->
+    <div style="text-align: center; margin-top: 40px; opacity: 0.5;">
+        <button onclick="resetGame()" style="background:none; border:none; font-size:12px;">重置我的数据</button>
     </div>
 
     <!-- 密码弹窗 -->
-    <div id="pwd-modal" class="modal">
+    <div id="modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 id="modal-title" class="cultural-font">打卡验证</h3>
-            <p style="color:#666; font-size:13px; margin-bottom:0;">请在现场寻找密码</p>
-            <input type="tel" id="pwd-input" class="code-input" placeholder="输入密码" maxlength="4">
-            <button class="btn-main" onclick="confirmCheckIn()">确认打卡</button>
-            <button class="btn-close" onclick="closeModal()">取消</button>
-            <div id="modal-msg" style="color:red; font-size:12px; margin-top:10px; min-height:15px;"></div>
+            <h3 id="modal-title" style="margin-bottom: 5px;">打卡验证</h3>
+            <p style="color: #666; font-size: 14px;">请输入现场看到的 4 位密码</p>
+            
+            <input type="number" id="pwd-input" class="pwd-input" placeholder="----" maxlength="4">
+            
+            <button class="btn-main" onclick="submitCheckIn()">确认打卡</button>
+            <button class="btn-sec" onclick="closeModal()">取消</button>
         </div>
     </div>
 
     <!-- 领奖界面 -->
     <div id="reward-screen" class="reward-screen">
-        <div style="font-size: 60px; margin-bottom:10px;">✨</div>
-        <h2 class="cultural-font">耕读有成</h2>
-        <p style="opacity: 0.8;">您已集齐所有印章</p>
+        <div class="reward-icon">🌾</div>
+        <h2 style="color: var(--primary);">圆满完成</h2>
+        <p style="color: #666;">恭喜您完成耕读之旅</p>
         
-        <div class="reward-box">
-            <div style="font-size:12px; color:#888;">核销编号</div>
-            <div class="reward-id" id="ticket-user-id">L-0000</div>
-            <div style="font-size:12px; color:var(--primary);">请向工作人员出示</div>
+        <div class="ticket-card">
+            <div>请出示此凭证领取纪念品</div>
+            <div class="ticket-id" id="ticket-id-display">L-0000</div>
         </div>
         
-        <button onclick="document.getElementById('reward-screen').style.display='none'" style="margin-top:40px; background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:10px 30px; border-radius:30px;">关闭</button>
+        <button class="btn-main" style="margin-top: 30px; width: auto; padding: 10px 40px;" onclick="document.getElementById('reward-screen').style.display='none'">关闭</button>
     </div>
 
-    <!-- 引入地图脚本 -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    // --- 配置区域 ---
+    // mapSrc: 如果你的地图图片不叫 map.jpg，在这里改名字
+    const mapSrc = "map.jpg"; 
+    
+    // spots: 配置景点、图片、密码
+    const spots = [
+        { id: 1, name: "青云古桥", desc: "横跨流水的石拱桥", img: "1.jpg", code: "1001" },
+        { id: 2, name: "渔隐公祠", desc: "黄氏族人的精神家园", img: "2.jpg", code: "2002" },
+        { id: 3, name: "塱头书室", desc: "传承百年书香", img: "3.jpg", code: "3003" },
+        { id: 4, name: "古榕树荫", desc: "见证了无数岁月", img: "4.jpg", code: "4004" },
+        { id: 5, name: "积墨楼", desc: "耕读文化的象征", img: "5.jpg", code: "5005" }
+    ];
 
-    <script>
-        // ================= 配置区域 =================
-        // 注意：需要填写每个景点的 经度 和 纬度
-        // 获取方法：在百度地图搜索景点，右键复制坐标即可（格式：23.1234, 113.1234）
-        const spots = [
-            { id: 1, name: "塱头牌坊", code: "1001", lat: 23.3985, lng: 113.2170, img: "1.jpg" },
-            { id: 2, name: "青云古桥", code: "2002", lat: 23.3975, lng: 113.2180, img: "2.jpg" },
-            { id: 3, name: "渔隐公祠", code: "3003", lat: 23.3990, lng: 113.2190, img: "3.jpg" },
-            { id: 4, name: "百岁榕树", code: "4004", lat: 23.3965, lng: 113.2165, img: "4.jpg" },
-            { id: 5, name: "积墨书室", code: "5005", lat: 23.3980, lng: 113.2175, img: "5.jpg" }
-        ];
-        // ===========================================
+    // --- 核心逻辑 ---
+    let userId = localStorage.getItem('langtou_userid');
+    let collected = JSON.parse(localStorage.getItem('langtou_collected')) || [];
+    let currentSpotId = null;
 
-        let userId = localStorage.getItem('langtou_userid');
+    // 初始化
+    function init() {
+        // 1. 生成或加载ID
         if (!userId) {
             userId = 'L-' + Math.floor(1000 + Math.random() * 9000);
             localStorage.setItem('langtou_userid', userId);
         }
+        document.getElementById('display-user-id').innerText = userId;
+        document.getElementById('ticket-id-display').innerText = userId;
 
-        let collected = JSON.parse(localStorage.getItem('langtou_collected')) || [];
-        let currentCheckId = null;
-        let map = null;
-        let markers = {};
+        // 2. 设置地图 (如果找不到图片，显示占位图，防止破图)
+        const mapImg = document.getElementById('map-img-tag');
+        mapImg.onerror = function() {
+            this.src = "https://placehold.co/600x300/3A5F45/FFF?text=请上传地图图片(map.jpg)";
+        };
 
-        function init() {
-            document.getElementById('display-user-id').innerText = userId;
-            document.getElementById('ticket-user-id').innerText = userId;
+        // 3. 渲染列表
+        renderList();
+        updateProgress();
+        checkUrlParams();
+    }
+
+    function renderList() {
+        const container = document.getElementById('spot-list');
+        container.innerHTML = '';
+        document.getElementById('total-num').innerText = spots.length;
+
+        spots.forEach(spot => {
+            const isCollected = collected.includes(spot.id);
+            const html = `
+                <div class="spot-card">
+                    <div class="spot-thumb ${isCollected ? 'collected' : ''}">
+                        <img src="${spot.img}" onerror="this.src='https://placehold.co/100/eee/999?text=图'">
+                        <div class="spot-status-icon">✓</div>
+                    </div>
+                    <div class="spot-info">
+                        <div class="spot-name">${spot.name}</div>
+                        <div class="spot-desc">${isCollected ? '已打卡' : '未打卡 · ' + spot.desc}</div>
+                    </div>
+                    <button class="btn-checkin" 
+                            onclick="openCheckIn(${spot.id}, '${spot.name}')" 
+                            ${isCollected ? 'disabled' : ''}>
+                        ${isCollected ? '已完成' : '打卡'}
+                    </button>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    }
+
+    function updateProgress() {
+        const percent = (collected.length / spots.length) * 100;
+        document.getElementById('current-num').innerText = collected.length;
+        document.getElementById('progress-bar').style.width = percent + '%';
+
+        if (collected.length === spots.length && spots.length > 0) {
+            setTimeout(() => {
+                document.getElementById('reward-screen').style.display = 'flex';
+            }, 1000);
+        }
+    }
+
+    // 打开弹窗
+    function openCheckIn(id, name) {
+        currentSpotId = id;
+        document.getElementById('modal-title').innerText = '打卡：' + name;
+        document.getElementById('pwd-input').value = '';
+        document.getElementById('modal').style.display = 'flex';
+        setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    // 验证密码
+    function submitCheckIn() {
+        const input = document.getElementById('pwd-input').value;
+        const target = spots.find(s => s.id === currentSpotId);
+
+        if (input === target.code) {
+            // 成功
+            collected.push(currentSpotId);
+            localStorage.setItem('langtou_collected', JSON.stringify(collected));
+            closeModal();
             renderList();
             updateProgress();
-            checkUrl();
-            
-            // 延迟加载地图，防止首屏卡顿
-            setTimeout(() => {
-                initMap();
-            }, 500);
-        }
-
-        // --- 视图切换逻辑 ---
-        function switchTab(view) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.list-view, .map-view').forEach(v => v.classList.remove('active'));
-            
-            if(view === 'list') {
-                document.querySelector('.tab:nth-child(1)').classList.add('active');
-                document.getElementById('list-view').classList.add('active');
-            } else {
-                document.querySelector('.tab:nth-child(2)').classList.add('active');
-                document.getElementById('map-view').classList.add('active');
-                if(map) map.invalidateSize(); // 刷新地图大小
-            }
-        }
-
-        // --- 列表渲染 ---
-        function renderList() {
-            const container = document.getElementById('spot-list-container');
-            container.innerHTML = '';
-            document.getElementById('total-num').innerText = spots.length;
-
-            spots.forEach(spot => {
-                const isCollected = collected.includes(spot.id);
-                const html = `
-                    <div class="spot-card ${isCollected ? 'done' : ''}">
-                        <div class="spot-info">
-                            <h3>${spot.name}</h3>
-                            <p>${isCollected ? '已打卡' : '寻找现场密码打卡'}</p>
-                            ${!isCollected ? `<button class="btn-checkin" onclick="openCheckIn(${spot.id}, '${spot.name}')">点击打卡</button>` : ''}
-                        </div>
-                        <div class="stamp-icon ${isCollected ? 'collected' : ''}">
-                            ${isCollected ? '已' : ''}
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += html;
-            });
-            if(map) updateMapMarkers();
-        }
-
-        function updateProgress() {
-            const count = collected.length;
-            const total = spots.length;
-            const percent = total === 0 ? 0 : (count / total) * 100;
-            document.getElementById('current-num').innerText = count;
-            document.getElementById('progress-bar').style.width = percent + '%';
-
-            if (count === total && total > 0) {
-                setTimeout(() => {
-                    document.getElementById('reward-screen').style.display = 'flex';
-                }, 1000);
-            }
-        }
-
-        // --- 地图逻辑 {
-            // 地图中心点：默认为第一个点
-            const center = spots[0];
-            map = L.map('map', { zoomControl: false }).setView([center.lat, center.lng], 16);
-
-            // 使用 OpenStreetMap 底图 (免费，无需Key)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap',
-                maxZoom: 19
-            }).addTo(map);
-
-            updateMapMarkers();
-        }
-
-        function updateMapMarkers() {
-            // 清除旧标记（简单处理）
-            for (let id in markers) {
-                map.removeLayer(markers[id]);
-            }
-            markers = {};
-
-            spots.forEach(spot => {
-                const isCollected = collected.includes(spot.id);
-                
-                // 样式定义：绿色圆点表示已打卡，灰色圆点表示未打卡
-                const color = isCollected ? '#27AE60' : '#95A5A6';
-                const radius = 8;
-                
-                const circleMarker = L.circleMarker([spot.lat, spot.lng], {
-                    color: color,       // 边框颜色
-                    fillColor: color,   // 填充颜色
-                    fillOpacity: 0.9,
-                    radius: radius
-                }).addTo(map);
-
-                // 点击标记触发打卡
-                circleMarker.on('click', () => {
-                    if (!isCollected) {
-                        openCheckIn(spot.id, spot.name);
-                    } else {
-                        alert(`"${spot.name}" 已打卡`);
-                    }
-                });
-
-                // 添加简单的弹窗提示
-                circleMarker.bindTooltip(spot.name, {
-                    permanent: false, 
-                    direction: 'top',
-                    className: 'map-tooltip' // 可自定义样式
-                });
-
-                markers[spot.id] = circleMarker;
-            });
-        }
-
-        // --- 打卡逻辑 ---
-        function openCheckIn(id, name) {
-            currentCheckId = id;
-            document.getElementById('modal-title').innerText = '打卡 · ' + name;
+            // 使用 Toast 替代 alert，体验更好
+            showToast("🎉 打卡成功！");
+        } else {
+            // 失败
             document.getElementById('pwd-input').value = '';
-            document.getElementById('modal-msg').innerText = '';
-            document.getElementById('pwd-modal').style.display = 'flex';
-            setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+            document.getElementById('pwd-input').focus();
+            showToast("密码错误，请重试");
         }
+    }
 
-        function confirmCheckIn() {
-            const inputVal = document.getElementById('pwd-input').value;
-            const targetSpot = spots.find(s => s.id === currentCheckId);
-            const msgBox = document.getElementById('modal-msg');
+    // 简单的 Toast 提示
+    function showToast(msg) {
+        const div = document.createElement('div');
+        div.style.cssText = "position:fixed; bottom:50%; left:50%; transform:translate(-50%, 50%); background:rgba(0,0,0,0.8); color:white; padding:10px 20px; border-radius:20px; z-index:3000; font-size:14px;";
+        div.innerText = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 2000);
+    }
 
-            if (inputVal === targetSpot.code) {
-                collected.push(currentCheckId);
-                localStorage.setItem('langtou_collected', JSON.stringify(collected));
-                renderList();
-                updateProgress();
-                closeModal();
-                // 地图上更新标记
-                updateMapMarkers();
-            } else {
-                msgBox.innerText = '密码错误，请重试';
-                document.getElementById('pwd-input').value = '';
+    function resetGame() {
+        if(confirm("确定重置所有打卡记录吗？")) {
+            localStorage.removeItem('langtou_collected');
+            location.reload();
+        }
+    }
+
+    function checkUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('spot');
+        if(id) {
+            const target = spots.find(s => s.id == id);
+            if(target && !collected.includes(target.id)) {
+                openCheckIn(target.id, target.name);
+                window.history.replaceState({}, document.title, "/");
             }
         }
+    }
 
-        function closeModal() {
-            document.getElementById('pwd-modal').style.display = 'none';
-        }
+    window.onload = init;
 
-        function checkUrl() {
-            const params = new URLSearchParams(window.location.search);
-            const spotId = params.get('spot');
-            if (spotId) {
-                const target = spots.find(s => s.id == spotId);
-                if (target && !collected.includes(target.id)) {
-                    openCheckIn(target.id, target.name);
-                    window.history.replaceState({}, document.title, "/");
-                }
-            }
-        }
-
-        window.onload = init;
-    </script>
+</script>
 </body>
 </html>
