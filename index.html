@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>塱头古村 · 耕读之旅</title>
     <style>
-        /* --- 保持原有的现代耕读风格 --- */
         :root {
             --primary: #3A5F45;
             --secondary: #C5A065;
@@ -27,7 +26,7 @@
         .user-badge { background: rgba(255,255,255,0.15); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 50px; display: inline-block; font-family: monospace; font-size: 1.1rem; letter-spacing: 1px; }
 
         .map-section { margin: -30px 15px 20px 15px; background: white; padding: 10px; border-radius: 16px; box-shadow: var(--shadow); position: relative; z-index: 10; }
-        .map-img { width: 100%; height: auto; border-radius: 12px; display: block; }
+        .map-img { width: 100%; height: auto; border-radius: 12px; display: block; background-color: #eee; }
         .map-tip { text-align: center; font-size: 0.8rem; color: var(--text-light); margin-top: 8px; }
 
         .progress-container { padding: 0 20px; margin-bottom: 20px; }
@@ -48,7 +47,6 @@
         .btn-checkin { background: var(--primary); color: white; border: none; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: background 0.2s; }
         .btn-checkin:disabled { background: #ddd; color: #999; }
 
-        /* 弹窗与提示 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 85%; max-width: 340px; padding: 30px 20px; border-radius: 20px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -114,41 +112,58 @@
     </div>
 
 <script>
-    // --- 核心逻辑：Base64 解密验证 ---
-    // 使用 atob() 函数将 Base64 乱码还原成真实密码进行比对
-    
-    const mapSrc = "map.jpg"; 
-    
-    // --- 配置景点 ---
-    // code: 这里填写密码
+    // --- 配置区域 ---
+    // 注意：这里每个 { ... } 后面必须有一个英文逗号 "," 除了最后一个
     const spots = [
-        { id: 1, name: "青云古桥", desc: "横跨流水的石拱桥", img: "1.jpg", code: "MTIzNA==" }
-        { id: 2, name: "渔隐公祠", desc: "黄氏族人的精神家园", img: "2.jpg", code: "MjAwMg==" }
-        { id: 3, name: "塱头书室", desc: "传承百年书香", img: "3.jpg", code: "MzAwMw==" }
-        { id: 4, name: "古榕树荫", desc: "见证了无数岁月", img: "4.jpg", code: "NDAwNA==" }
-        { id: 5, name: "积墨楼",   desc: "耕读文化的象征",   img: "5.jpg", code: "NTAwNQ==" }
+        { id: 1, name: "青云古桥", desc: "横跨流水的石拱桥", img: "1.jpg", code: "1234" }, 
+        { id: 2, name: "渔隐公祠", desc: "黄氏族人的精神家园", img: "2.jpg", code: "2002" }, 
+        { id: 3, name: "塱头书室", desc: "传承百年书香", img: "3.jpg", code: "3003" }, 
+        { id: 4, name: "古榕树荫", desc: "见证了无数岁月", img: "4.jpg", code: "4004" }, 
+        { id: 5, name: "积墨楼",   desc: "耕读文化的象征",   img: "5.jpg", code: "5005" }  
     ];
 
-    let userId = localStorage.getItem('langtou_userid');
-    let collected = JSON.parse(localStorage.getItem('langtou_collected')) || [];
+    let userId = null;
+    let collected = [];
     let currentSpotId = null;
 
     function init() {
-        if (!userId) {
-            userId = 'L-' + Math.floor(1000 + Math.random() * 9000);
-            localStorage.setItem('langtou_userid', userId);
+        try {
+            // 1. 生成/加载 ID
+            let savedId = localStorage.getItem('langtou_userid');
+            if (!savedId) {
+                savedId = 'L-' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('langtou_userid', savedId);
+            }
+            userId = savedId;
+            document.getElementById('display-user-id').innerText = userId;
+            document.getElementById('ticket-id-display').innerText = userId;
+
+            // 2. 加载进度
+            let savedProgress = localStorage.getItem('langtou_collected');
+            if (savedProgress) {
+                collected = JSON.parse(savedProgress);
+            }
+
+            // 3. 地图错误处理
+            const mapImg = document.getElementById('map-img-tag');
+            mapImg.onerror = function() {
+                this.src = "https://placehold.co/600x300/3A5F45/FFF?text=未找到地图图片(map.jpg)";
+            };
+
+            // 4. 渲染界面
+            renderList();
+            updateProgress();
+            checkUrlParams();
+
+            // 调试提示：如果看到这个弹窗，说明代码运行正常
+            console.log("初始化成功，ID:", userId);
+            // alert("网页加载成功！如果看到这句话，说明代码没有大问题。"); 
+            // (如果你想确认，可以把上面这行前面的 // 删掉)
+
+        } catch (error) {
+            alert("网页加载出错：" + error.message);
+            console.error(error);
         }
-        document.getElementById('display-user-id').innerText = userId;
-        document.getElementById('ticket-id-display').innerText = userId;
-
-        const mapImg = document.getElementById('map-img-tag');
-        mapImg.onerror = function() {
-            this.src = "https://placehold.co/600x300/3A5F45/FFF?text=请上传地图图片(map.jpg)";
-        };
-
-        renderList();
-        updateProgress();
-        checkUrlParams();
     }
 
     function renderList() {
@@ -200,25 +215,35 @@
         document.getElementById('modal').style.display = 'none';
     }
 
-    // --- 验证逻辑：解码对比 ---
     function submitCheckIn() {
-        const input = document.getElementById('pwd-input').value;
-        const target = spots.find(s => s.id === currentSpotId);
+        try {
+            const input = document.getElementById('pwd-input').value;
+            const target = spots.find(s => s.id === currentSpotId);
 
-        // 关键步骤：使用 atob() 解码代码里的乱码
-        const realCode = atob(target.code); 
+            let realCode = target.code;
+            
+            // 尝试解码 (如果是 Base64)
+            try {
+                realCode = atob(target.code);
+            } catch (e) {
+                // 如果解码失败，说明是明文密码，直接使用
+                realCode = target.code;
+            }
 
-        if (input === realCode) {
-            collected.push(currentSpotId);
-            localStorage.setItem('langtou_collected', JSON.stringify(collected));
-            closeModal();
-            renderList();
-            updateProgress();
-            showToast("🎉 打卡成功！");
-        } else {
-            document.getElementById('pwd-input').value = '';
-            document.getElementById('pwd-input').focus();
-            showToast("密码错误，请重试");
+            if (input === realCode) {
+                collected.push(currentSpotId);
+                localStorage.setItem('langtou_collected', JSON.stringify(collected));
+                closeModal();
+                renderList();
+                updateProgress();
+                showToast("🎉 打卡成功！");
+            } else {
+                document.getElementById('pwd-input').value = '';
+                document.getElementById('pwd-input').focus();
+                showToast("密码错误，请重试");
+            }
+        } catch (error) {
+            alert("打卡验证出错：" + error.message);
         }
     }
 
@@ -249,7 +274,9 @@
         }
     }
 
+    // 确保页面加载完执行
     window.onload = init;
+
 </script>
 </body>
 </html>
